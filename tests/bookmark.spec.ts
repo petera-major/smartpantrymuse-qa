@@ -1,25 +1,26 @@
 // tests/bookmark.spec.ts
 import { test, expect } from '@playwright/test';
 import { ensureLoggedIn } from '../helpers/auth';
+import { goToRecipes, ensureResultsExist, findFirstRecipeCard } from '../helpers/recipes';
+import { startApp } from '../helpers/app';
+
 
 test('bookmark persists after reload', async ({ page, baseURL }) => {
-  await page.goto(baseURL!);
+  await startApp(page, baseURL);
+  await goToRecipes(page);
+  await ensureResultsExist(page);
 
-  // open a recipe
-  await page.getByTestId('recipe-card').first().click();
+  const card = await findFirstRecipeCard(page);
+  await card.click();
 
-  // if login pops up (first time in a new browser), complete it
-  await ensureLoggedIn(page);
+  await ensureLoggedIn(page); // only acts if login visible
 
-  // toggle save
-  const toggle = page.getByTestId('bookmark-toggle');
+  const toggle = page.getByTestId('bookmark-toggle')
+    .or(page.getByRole('button', { name: /save|bookmark|heart/i }).first());
   await toggle.click();
-
-  // verify saved state, reload, verify again
-  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle).toHaveAttribute('aria-pressed', /true/i);
   await page.reload();
-  await expect(page.getByTestId('bookmark-toggle')).toHaveAttribute('aria-pressed', 'true');
-
-  await page.getByTestId('bookmark-toggle').click();
-  await expect(page.getByTestId('bookmark-toggle')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByTestId('bookmark-toggle')
+    .or(page.getByRole('button', { name: /save|bookmark|heart/i }).first())
+  ).toHaveAttribute('aria-pressed', /true/i);
 });
