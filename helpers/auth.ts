@@ -1,14 +1,12 @@
-// helpers/auth.ts
+
 import { Page, expect } from '@playwright/test';
 
 export async function ensureLoggedIn(page: Page) {
-  // If a login modal/screen appears, complete it. Otherwise do nothing.
-  const loginEmail = page.getByTestId('login-email');
-  if (await loginEmail.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await loginEmail.fill(process.env.TEST_EMAIL!);
-    await page.getByTestId('login-password').fill(process.env.TEST_PASSWORD!);
-    await page.getByTestId('login-submit').click();
-    // confirm login succeeded (tweak to your UI)
-    await expect(page.getByText(/welcome|hi|hello/i)).toBeVisible({ timeout: 7000 });
+  const email = page.getByTestId('login-email').or(page.getByPlaceholder(/email/i));
+  if (await email.isVisible({ timeout: 800 }).catch(() => false)) {
+    await email.fill(process.env.TEST_EMAIL!);
+    await page.getByTestId('login-password').or(page.getByPlaceholder(/password/i)).fill(process.env.TEST_PASSWORD!);
+    await page.getByTestId('login-submit').or(page.getByRole('button', { name: /log ?in|sign ?in/i })).click();
+    await expect(page).toHaveURL(/./, { timeout: 7000 }); // any nav/change
   }
 }

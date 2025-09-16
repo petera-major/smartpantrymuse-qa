@@ -1,11 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { ensureLoggedIn } from '../helpers/auth';
-import { goToRecipes, ensureResultsExist, findFirstRecipeCard } from '../helpers/recipes';
 import { startApp } from '../helpers/app';
+import { ensureLoggedIn } from '../helpers/auth';
+import { ensureResultsExist, findFirstRecipeCard } from '../helpers/recipes';
 
 test('bookmark flow triggers login, then saves', async ({ page, baseURL }) => {
   await startApp(page, baseURL);
-  await goToRecipes(page);
   await ensureResultsExist(page);
 
   const card = await findFirstRecipeCard(page);
@@ -13,8 +12,9 @@ test('bookmark flow triggers login, then saves', async ({ page, baseURL }) => {
 
   const bookmark = page.getByTestId('bookmark-toggle')
     .or(page.getByRole('button', { name: /save|bookmark|heart/i }).first());
-  await bookmark.click();      //  prompt login if logged out
-  await ensureLoggedIn(page);  // fills creds if login appears
+
+  await bookmark.click();      // prompts login if logged out
+  await ensureLoggedIn(page);  // fill creds if needed
   await bookmark.click();      // set saved state
 
   await expect(bookmark).toHaveAttribute('aria-pressed', /true/i);
